@@ -1,8 +1,9 @@
-// run the script with npx ts-node main.ts
-console.log("running...");
+// run the script with node main.js > out.csv
+// console.log("running...");
 
 const fs = require("fs");
 const path = require("path");
+const Papa = require("papaparse");
 
 // read every file in the data directory
 const dataDir = path.join(__dirname, "data");
@@ -21,8 +22,35 @@ files.map((file) => {
   orderData.push(data);
 });
 
-console.log("results");
-console.log(orderData);
+// console.log("results");
+// console.log(orderData);
+console.log(
+  Papa.unparse(
+    orderData.map((order) => ({
+      ...order,
+      ...order.personTotals,
+    })),
+    { columns: getColumns(orderData) },
+  ),
+);
+
+function getColumns(orderData) {
+  const columns = [
+    "orderUuid",
+    "receiptLink",
+    "date",
+    "storeName",
+    "totalCharged",
+    "calculatedTotal",
+  ];
+  const personNames = orderData.reduce(
+    (acc, order) => acc.concat(Object.keys(order.personTotals)),
+    [],
+  );
+  const uniquePersonNamesSet = new Set(personNames);
+  uniquePersonNamesSet.delete("calculatedTotal");
+  return columns.concat([...uniquePersonNamesSet].sort());
+}
 
 function getOrderData(data) {
   const timestamp =
@@ -33,10 +61,11 @@ function getOrderData(data) {
     timeZone: "America/Los_Angeles",
   });
   const date = dtFormat.format(new Date(timestamp * 1000));
+  const orderUuid = data.props.pageProps.pageProps.orderUuid;
 
   return {
-    orderUuid: data.props.pageProps.pageProps.orderUuid,
-    timestamp,
+    orderUuid,
+    receiptLink: `https://www.doordash.com/orders/${orderUuid}/receipt/`,
     date,
     storeName: data.props.pageProps.pageProps.receiptData.storeName,
     personTotals: getPersonTotals(data),
