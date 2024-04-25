@@ -59,12 +59,21 @@ function getPersonTotals(data) {
       order.creator.localizedNames.informalName;
 
     const personTotalWithoutFees = order.orderItemsList.reduce(
-      (acc, item) => acc + item.item.price / 100,
+      (acc, item) => acc + (item.quantity * item.item.price) / 100,
       0,
     );
     const personTotal = (personTotalWithoutFees / subtotal) * totalCharged;
     personTotals[creatorName] = personTotal;
   });
+
+  const calculatedTotal = Object.values(personTotals).reduce(
+    (acc, val) => acc + val,
+    0,
+  );
+  personTotals["calculatedTotal"] = calculatedTotal;
+  // if (Math.abs(calculatedTotal - totalCharged) > 0.01) {
+  //   debugger;
+  // }
 
   return personTotals;
 }
