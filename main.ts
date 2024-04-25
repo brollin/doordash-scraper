@@ -39,12 +39,27 @@ function getOrderData(data: any) {
     orderUuid: data.props.pageProps.pageProps.orderUuid,
     timestamp,
     date,
+    storeName: data.props.pageProps.pageProps.receiptData.storeName,
     personTotals: getPersonTotals(data),
   };
 }
 
 function getPersonTotals(data: any) {
-  const personTotals = {};
+  const personTotals = {} as any;
+
+  const { receiptData } = data.props.pageProps.pageProps;
+
+  const people = receiptData.orders.map((order: any) => {
+    return order.creator.localizedNames.informalName;
+  });
+
+  (people as string[]).forEach((person: string, index: number) => {
+    const splitBillLineItems = receiptData.splitBillLineItems[index].lineItems;
+    const total =
+      splitBillLineItems[splitBillLineItems.length - 1].finalMoney.unitAmount /
+      100;
+    personTotals[person] = total;
+  });
 
   return personTotals;
 }
