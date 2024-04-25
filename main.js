@@ -48,11 +48,12 @@ function getOrderData(data) {
 function getPersonTotals(data) {
   const personTotals = {};
 
-  const { receiptData } = data.props.pageProps.pageProps;
+  const { receiptData, orderUuid } = data.props.pageProps.pageProps;
   const totalCharged =
     data.props.pageProps.pageProps.consumerOrders.totalCharged / 100;
   const subtotal = data.props.pageProps.pageProps.consumerOrders.subtotal / 100;
 
+  // manually calculate each person's total from the bill
   receiptData.orders.forEach((order) => {
     const creatorName =
       order.creator.localizedNames.formalName ||
@@ -65,6 +66,27 @@ function getPersonTotals(data) {
     const personTotal = (personTotalWithoutFees / subtotal) * totalCharged;
     personTotals[creatorName] = personTotal;
   });
+
+  // when the split bill is funky just skip using it by including the order in this list
+  const splitBillBlacklist = ["e18a4e51-cc81-40c3-b482-ba95fe304b99"];
+
+  // OR, if the split bill is available just use that instead
+  if (
+    receiptData.splitBillLineItems &&
+    !splitBillBlacklist.includes(orderUuid)
+  ) {
+    receiptData.orders.forEach((order, index) => {
+      const creatorName =
+        order.creator.localizedNames.formalName ||
+        order.creator.localizedNames.informalName;
+      const splitBillLineItems =
+        receiptData.splitBillLineItems[index].lineItems;
+      const total =
+        splitBillLineItems[splitBillLineItems.length - 1].finalMoney
+          .unitAmount / 100;
+      personTotals[creatorName] = total;
+    });
+  }
 
   const calculatedTotal = Object.values(personTotals).reduce(
     (acc, val) => acc + val,

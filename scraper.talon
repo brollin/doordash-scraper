@@ -4,7 +4,7 @@ browser.host: www.doordash.com
 
 scrape door:
     # requires creating the reference first
-    # "mark air bat as json"
+    # "mark air bat as json" where the target is the input from the tamper monkey script
     user.rango_run_action_on_reference("focusElement", "json")
     sleep(1000ms)
     key(cmd-a)
